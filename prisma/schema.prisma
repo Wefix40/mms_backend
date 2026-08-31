@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model menus {
+  icon             String
+  id               String             @id @db.Uuid
+  label            String
+  parent_id        String?            @db.Uuid
+  route            String?
+  sequence         Int
+  menus            menus?             @relation("menusTomenus", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_menus      menus[]            @relation("menusTomenus")
+  role_permissions role_permissions[]
+  user_permissions user_permissions[]
+
+  @@index([parent_id], map: "menus_parent_id_idx_ab33b399")
+}
+
+model role_permissions {
+  can_create Boolean @default(false)
+  can_delete Boolean @default(false)
+  can_edit   Boolean @default(false)
+  can_view   Boolean @default(false)
+  menu_id    String  @db.Uuid
+  role_id    String  @db.Uuid
+  menus      menus   @relation(fields: [menu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles      roles   @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, menu_id])
+  @@index([menu_id], map: "role_permissions_menu_id_idx_acdcfcd6")
+  @@index([role_id], map: "role_permissions_role_id_idx_d9467c50")
+}
+
+model roles {
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  description      String?
+  id               String             @id @db.Uuid
+  name             String             @unique
+  updated_at       DateTime           @db.Timestamptz(6)
+  role_permissions role_permissions[]
+  users            users[]
+}
+
+model user_permissions {
+  can_create Boolean
+  can_delete Boolean
+  can_edit   Boolean
+  can_view   Boolean
+  menu_id    String  @db.Uuid
+  user_id    String  @db.Uuid
+  menus      menus   @relation(fields: [menu_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, menu_id])
+  @@index([menu_id], map: "user_permissions_menu_id_idx_acdcfcd6")
+  @@index([user_id], map: "user_permissions_user_id_idx_6c952402")
+}
+
+model users {
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  email            String             @unique
+  id               String             @id @db.Uuid
+  name             String
+  password_hash    String
+  phone            String?
+  role_id          String             @db.Uuid
+  updated_at       DateTime           @db.Timestamptz(6)
+  user_permissions user_permissions[]
+  roles            roles              @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+
+  @@index([role_id], map: "users_role_id_idx_d9467c50")
+}
