@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto.js';
 
 @Injectable()
 export class UsersService {
@@ -149,6 +150,82 @@ export class UsersService {
       return {
         message: 'User deleted successfully',
       };
+    });
+  }
+
+  /**
+   * Get User Permissions
+   */
+  async getPermissions(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.user_permissions.findMany({
+      where: {
+        user_id: id,
+      },
+      include: {
+        menus: true,
+      },
+      orderBy: {
+        menus: {
+          sequence: 'asc',
+        },
+      },
+    });
+  }
+
+  /**
+   * Replace User Permissions
+   */
+  async updatePermissions(
+    id: string,
+    dto: UpdateUserPermissionsDto,
+  ) {
+    await this.findOne(id);
+
+    const menuIds = dto.permissions.map((p) => p.menu_id);
+
+    const menus = await this.prisma.menus.findMany({
+      where: {
+        id: {
+          in: menuIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (menus.length !== menuIds.length) {
+      throw new NotFoundException('Invalid menu selected');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user_permissions.deleteMany({
+        where: {
+          user_id: id,
+        },
+      });
+
+      await tx.user_permissions.createMany({
+        data: dto.permissions.map((permission) => ({
+          user_id: id,
+          menu_id: permission.menu_id,
+          can_view: permission.can_view,
+          can_create: permission.can_create,
+          can_edit: permission.can_edit,
+          can_delete: permission.can_delete,
+        })),
+      });
+
+      return tx.user_permissions.findMany({
+        where: {
+          user_id: id,
+        },
+        include: {
+          menus: true,
+        },
+      });
     });
   }
 }

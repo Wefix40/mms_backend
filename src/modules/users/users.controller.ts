@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -18,6 +19,7 @@ import {
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { UpdateUserPermissionsDto } from './dto/update-user-permissions.dto.js';
 
 @ApiTags('Users')
 @Controller('users')
@@ -54,6 +56,27 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     return this.service.update(id, dto);
+  }
+
+  @Get(':id/permissions')
+  @ApiOperation({ summary: 'Get permissions for a user' })
+  @ApiParam({ name: 'id', description: 'User UUID' })
+  @ApiResponse({ status: 200, description: 'Returns user permissions.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  getPermissions(@Param('id') id: string) {
+    return this.service.getPermissions(id);
+  }
+
+  @Put(':id/permissions')
+  @ApiOperation({ summary: 'Update permissions for a user' })
+  @ApiParam({ name: 'id', description: 'User UUID' })
+  @ApiResponse({ status: 200, description: 'Permissions updated successfully.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  updatePermissions(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserPermissionsDto,
+  ) {
+    return this.service.updatePermissions(id, dto);
   }
 
   @Delete(':id')
