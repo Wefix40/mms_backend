@@ -11,6 +11,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   setupSwagger(app);
 
+  app.enableCors(); // Allows requests from the frontend
+  app.setGlobalPrefix('api');
+
   await app.listen(process.env.PORT ?? 3000);
 }
 await bootstrap();

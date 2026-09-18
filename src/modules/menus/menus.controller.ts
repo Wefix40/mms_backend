@@ -6,8 +6,10 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiParam,
@@ -18,13 +20,19 @@ import {
 import { MenusService } from './menus.service.js';
 import { CreateMenuDto } from './dto/create-menu.dto.js';
 import { UpdateMenuDto } from './dto/update-menu.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
+import { Roles } from '../auth/decorators/roles.decorator.js';
 
 @ApiTags('Menus')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('menus')
 export class MenusController {
   constructor(private readonly service: MenusService) {}
 
   @Post()
+  @Roles('superadmin')
   @ApiOperation({ summary: 'Create Menu' })
   @ApiBody({ type: CreateMenuDto })
   @ApiResponse({ status: 201, description: 'Menu created successfully.' })
@@ -60,6 +68,7 @@ export class MenusController {
   }
 
   @Patch(':id')
+  @Roles('superadmin')
   @ApiOperation({ summary: 'Update Menu' })
   @ApiParam({
     name: 'id',
@@ -76,6 +85,7 @@ export class MenusController {
   }
 
   @Delete(':id')
+  @Roles('superadmin')
   @ApiOperation({ summary: 'Delete Menu' })
   @ApiParam({
     name: 'id',

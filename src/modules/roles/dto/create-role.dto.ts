@@ -24,9 +24,11 @@ export class CreateRoleDto {
 
   @ApiProperty({
     type: [RolePermissionDto],
+    required: false,
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => RolePermissionDto)
-  permissions: RolePermissionDto[];
+  permissions?: RolePermissionDto[];
 }

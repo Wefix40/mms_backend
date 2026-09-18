@@ -41,10 +41,13 @@ export class UsersService {
     return this.prisma.users.create({
       data: {
         id: randomUUID(),
+        user_id: dto.user_id,
         name: dto.name,
         email: dto.email,
         phone: dto.phone,
         role_id: dto.role_id,
+        is_admin: dto.is_admin || false,
+        is_superadmin: dto.is_superadmin || false,
         password_hash: passwordHash,
         updated_at: new Date(),
       },
@@ -157,7 +160,22 @@ export class UsersService {
    * Get User Permissions
    */
   async getPermissions(id: string) {
-    await this.findOne(id);
+    const user = await this.findOne(id);
+
+    if (user.is_superadmin) {
+      const allMenus = await this.prisma.menus.findMany({
+        orderBy: { sequence: 'asc' },
+      });
+      return allMenus.map(menu => ({
+        user_id: id,
+        menu_id: menu.id,
+        can_view: true,
+        can_create: true,
+        can_edit: true,
+        can_delete: true,
+        menus: menu,
+      }));
+    }
 
     return this.prisma.user_permissions.findMany({
       where: {

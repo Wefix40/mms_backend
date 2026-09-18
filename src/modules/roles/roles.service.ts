@@ -27,7 +27,8 @@ export class RolesService {
       throw new ConflictException('Role already exists');
     }
 
-    const menuIds = dto.permissions.map((p) => p.menu_id);
+    const permissions = dto.permissions || [];
+    const menuIds = permissions.map((p) => p.menu_id);
 
     const menus = await this.prisma.menus.findMany({
       where: {
@@ -54,16 +55,18 @@ export class RolesService {
         },
       });
 
-      await tx.role_permissions.createMany({
-        data: dto.permissions.map((permission) => ({
-          role_id: role.id,
-          menu_id: permission.menu_id,
-          can_view: permission.can_view,
-          can_create: permission.can_create,
-          can_edit: permission.can_edit,
-          can_delete: permission.can_delete,
-        })),
-      });
+      if (permissions.length > 0) {
+        await tx.role_permissions.createMany({
+          data: permissions.map((permission) => ({
+            role_id: role.id,
+            menu_id: permission.menu_id,
+            can_view: permission.can_view,
+            can_create: permission.can_create,
+            can_edit: permission.can_edit,
+            can_delete: permission.can_delete,
+          })),
+        });
+      }
 
       return tx.roles.findUnique({
         where: { id: role.id },
