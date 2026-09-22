@@ -40,17 +40,15 @@ jobs:
     - name: Build
       run: npm run build
 
-    - name: SSH and Deploy
+    - name: SSH Test
+      if: github.event_name == 'push'
       uses: appleboy/ssh-action@v1.2.0
       with:
         host: ${{ secrets.DEPLOY_HOST }}
-        username: ${{ secrets.DEPLOY_USER }}
+        username: root
         key: ${{ secrets.DEPLOY_KEY }}
-        port: ${{ secrets.DEPLOY_PORT }}
+        port: 22
+        timeout: 60s
+        debug: true
         script: |
-          cd /var/www/mms_backend
-          git pull origin main
-          npm ci --omit=dev --no-audit
-          npx prisma generate --no-engine
-          npm run build
-          pm2 restart mms_backend
+          whoami
