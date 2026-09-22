@@ -46,6 +46,7 @@ jobs:
       with:
         host: ${{ secrets.DEPLOY_HOST }}
         username: root
+        
         key: ${{ secrets.DEPLOY_KEY }}
         port: 22
         timeout: 60s
