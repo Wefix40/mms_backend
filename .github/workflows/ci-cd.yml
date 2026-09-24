@@ -40,21 +40,31 @@ jobs:
     - name: Build
       run: npm run build
 
-    - name: SSH Test
-      if: github.event_name == 'push'
-      uses: appleboy/ssh-action@v1.2.0
-      with:
-        host: ${{ secrets.DEPLOY_HOST }}
-        username: root
+   - name: Deploy to Server
+  if: github.event_name == 'push'
+  uses: appleboy/ssh-action@v1.2.0
+  with:
+    host: ${{ secrets.DEPLOY_HOST }}
+    username: root
+    key: ${{ secrets.DEPLOY_KEY }}
+    port: 7845
+    timeout: 60s
+    debug: true
+    script: |
+      export NVM_DIR="/root/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-        key: ${{ secrets.DEPLOY_KEY }}
-        port: 7845
-        timeout: 60s
-        debug: true
-        script: |
-          cd /var/www/mms_backend
-          git pull origin main
-          npm ci --omit=dev --no-audit
-          npx prisma generate --no-engine
-          npm run build
-          pm2 restart mms_backend
+      echo "User: $(whoami)"
+      node -v
+      npm -v
+      npx --version
+      pm2 -v
+
+      cd /var/www/mms_backend
+
+      git pull origin main
+      npm ci --omit=dev --no-audit
+      npx prisma generate --no-engine
+      npm run build
+      pm2 restart mms_backend
+      pm2 save
